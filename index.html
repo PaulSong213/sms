@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <div style="display: flex; flex-direction: column; width: 20rem;">
+    <a id="register" target="_blank">Register A User's Number</a>
+    <button onclick="decodeUsersData(usersCode)">Send Message</button>
+    <p id="usersNumber">Current Number: </p>
+  </div>
+</head>
+<body>
+  
+
+</body>
+
+<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+<script>
+  const sms = axios.create({
+    baseURL: 'https://developer.globelabs.com.ph',
+    headers: {'Access-Control-Allow-Origin': 'https://developer.globelabs.com.ph',
+              'Access-Control-Allow-Methods' : 'POST'}
+  });
+
+  const appId = "RaEXHgxBEoC7kTRjgoiB8GCdXan4HorG";
+  const appSercet = "425e751493dd63c9e58cf2d338b8c1f8847de2503aa440cd14dbba7c4b08ad0a";
+  const shortCode = "21588478";
+  const shortCodeLast4Digit = "8478";
+  const registrationLink = "https://developer.globelabs.com.ph/dialog/oauth/" + appId;
+  setRegistrationLink();
+  
+  const usersCode =     "duq5reruXepBpuaBj7xu4ez9gtRdRrjCo7Rn6uzbyA9C7Mgn7IoEKyaHp7eMbIjAAMqf757K6UAa9RgFd8qnBCMpMMzh7K5pAtgzAakU4yaj6h9A7pBI7n74jC7ocyjnp5ni7xyCd57gMIKraprh9xAo6U595prtpyMBnheKqLMCGB9EaFK97qjU7rAgRfz4ej7I9eKXqHeLgjkIKky8yCL7Rr4uGkRyMCzLzX7toMjA8ujbp9guK8roGuEz4X5u";
+   //this should be from database, this is what we can get after a successful user's registration
+  
+  updateCurrentNumber();
+  function setRegistrationLink(){
+    document.getElementById("register").href = registrationLink;
+  }
+  
+  function updateCurrentNumber(usersNumber = "None"){
+    document.getElementById("usersNumber").innerHTML = "Current number: " + usersNumber;
+  }
+
+  function decodeUsersData(currentUserCode){
+      let getLink = "/oauth/access_token?app_id="+ appId +"&app_secret="+ appSercet +"&code=" + currentUserCode;
+      sms.post(getLink).then(function (response) {
+        const data = response.data;
+        const access_token = data.access_token;
+        const subscriber_number = data.subscriber_number;
+        var message = "test message";
+        sendMessage(message,access_token,subscriber_number);
+      })
+  }
+
+    function sendMessage(message = "test message",usersAccessToken, usersPhoneNumber){
+      updateCurrentNumber(usersPhoneNumber);
+      let sendLink = "https://devapi.globelabs.com.ph/smsmessaging/v1/outbound/8478/requests?access_token=" + usersAccessToken;
+      sms.post(sendLink,{
+        "outboundSMSMessageRequest": {
+          "clientCorrelator": shortCode,
+          "senderAddress": shortCodeLast4Digit,
+          "outboundSMSTextMessage": {"message": message},
+          "address": usersPhoneNumber
+        }
+      })
+      .then(function (response) {
+        console.log(response);
+      })
+    }
+</script>
+</html>
